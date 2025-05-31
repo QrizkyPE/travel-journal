@@ -2,7 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'providers/theme_provider.dart';
-
+import 'screens/sign_in_screen.dart';
+import 'screens/home_screen.dart';
+import 'screens/post_screen.dart';
+import 'screens/favorites_screen.dart';
+import 'screens/detail_screen.dart';
+import 'screens/profile_screen.dart';
+import 'screens/edit_profile_screen.dart';
+import 'screens/search_screen.dart';
+import 'screens/best_destinations_screen.dart';
 import 'firebase_options.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:firebase_auth/firebase_auth.dart';
@@ -21,7 +29,7 @@ void main() async {
   // Catch all Dart errors that aren't caught elsewhere
   runZonedGuarded(() async {
     WidgetsFlutterBinding.ensureInitialized();
-
+    
     // Initialize Firebase only if not on web platform
     if (!kIsWeb) {
       try {
@@ -29,7 +37,7 @@ void main() async {
           options: DefaultFirebaseOptions.currentPlatform,
         );
         print('Firebase initialized successfully');
-
+        
         // Initialize global Firebase Auth instance
         firebaseAuth = FirebaseAuth.instance;
       } catch (e) {
@@ -38,7 +46,7 @@ void main() async {
     } else {
       print('Web platform detected - Firebase initialization skipped');
     }
-
+    
     runApp(
       ChangeNotifierProvider(
         create: (context) => ThemeProvider(),
@@ -57,7 +65,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
-
+    
     return MaterialApp(
       title: 'Travel Journal',
       debugShowCheckedModeBanner: false,
@@ -65,11 +73,29 @@ class MyApp extends StatelessWidget {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       home: kIsWeb ? const WebPlatformMessage() : const SignInScreen(),
-      routes: {},
+      routes: {
+        '/signin': (context) => const SignInScreen(),
+        '/home': (context) => const HomeScreen(),
+        '/calendar': (context) => const PostScreen(),
+        '/favorites': (context) => const FavoritesScreen(),
+        '/profile': (context) => const ProfileScreen(),
+        '/edit_profile': (context) => const EditProfileScreen(),
+        '/best_destinations': (context) => const BestDestinationsScreen(),
+        '/detail': (context) {
+          // Handle both cases: with or without a postId
+          final args = ModalRoute.of(context)?.settings.arguments;
+          if (args != null && args is String) {
+            return DetailScreen(postId: args);
+          }
+          return const DetailScreen(); // No specific post, show all posts
+        },
+        '/search': (context) => const SearchScreen(),
+      },
     );
   }
 }
 
+// Web platform message to indicate this app is for mobile only
 class WebPlatformMessage extends StatelessWidget {
   const WebPlatformMessage({super.key});
 
