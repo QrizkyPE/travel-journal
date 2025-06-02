@@ -23,14 +23,14 @@ class _HomeScreenState extends State<HomeScreen> {
   String userName = '';
   String userInitials = '';
   String? userPhotoURL;
-  
+
   List<TravelPost> _recentPosts = [];
   List<TravelPost> _bestDestinations = [];
   List<TravelPost> _userPosts = []; // Current user's posts
   bool _isLoading = true;
-  
+
   Map<String, Map<String, dynamic>?> _userDataCache = {};
-  
+
   @override
   void initState() {
     super.initState();
@@ -39,14 +39,14 @@ class _HomeScreenState extends State<HomeScreen> {
     // Load recent posts and popular destinations
     _loadPosts();
   }
-  
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     // Reload user data when the screen becomes visible
     _loadUserData();
   }
-  
+
   Future<void> _loadUserData() async {
     try {
       final user = authService.currentUser;
@@ -54,7 +54,7 @@ class _HomeScreenState extends State<HomeScreen> {
         try {
           // Clear the user data cache to ensure we get fresh data
           _userDataCache.clear();
-          
+
           final userData = await authService.getUserData();
           if (userData != null && mounted) {
             setState(() {
@@ -65,7 +65,8 @@ class _HomeScreenState extends State<HomeScreen> {
           } else {
             // If no Firestore data found, fallback to Auth user data
             setState(() {
-              userName = user.displayName ?? user.email?.split('@')[0] ?? 'User';
+              userName =
+                  user.displayName ?? user.email?.split('@')[0] ?? 'User';
               userInitials = _getInitials(userName);
               userPhotoURL = user.photoURL;
             });
@@ -83,29 +84,29 @@ class _HomeScreenState extends State<HomeScreen> {
       print("Home Screen: Error loading user data: $e");
     }
   }
-  
+
   Future<void> _loadPosts() async {
     try {
       setState(() => _isLoading = true);
-      
+
       // Get all posts from Firestore
       final posts = await travelPostService.getRecentPosts();
-      
+
       // Get current user's posts
       final userPosts = await travelPostService.getUserPosts();
-      
+
       // Get current user ID
       final userId = authService.currentUser?.uid;
-      
+
       // Filter posts not created by the current user
       final otherUsersPosts = userId != null
           ? posts.where((post) => post.userId != userId).toList()
           : posts;
-      
+
       // For best destinations, use all posts including user's own
       final bestDestinations = List<TravelPost>.from(posts);
       bestDestinations.sort((a, b) => (b.likeCount).compareTo(a.likeCount));
-      
+
       if (mounted) {
         setState(() {
           _recentPosts = otherUsersPosts;
@@ -116,7 +117,7 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     } catch (e) {
       print("Error loading posts: $e");
-      
+
       if (mounted) {
         setState(() {
           _recentPosts = [];
@@ -124,7 +125,7 @@ class _HomeScreenState extends State<HomeScreen> {
           _bestDestinations = [];
           _isLoading = false;
         });
-        
+
         // Show error to user
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Couldn't load posts: $e")),
@@ -132,18 +133,20 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     }
   }
-  
+
   String _getInitials(String fullName) {
     if (fullName.isEmpty) return 'U';
-    
-    final nameParts = fullName.split(' ').where((part) => part.isNotEmpty).toList();
+
+    final nameParts =
+        fullName.split(' ').where((part) => part.isNotEmpty).toList();
     if (nameParts.isEmpty) return 'U';
-    
+
     if (nameParts.length == 1) {
       return nameParts[0].substring(0, 1).toUpperCase();
     }
-    
-    return (nameParts[0].substring(0, 1) + nameParts[1].substring(0, 1)).toUpperCase();
+
+    return (nameParts[0].substring(0, 1) + nameParts[1].substring(0, 1))
+        .toUpperCase();
   }
 
   Future<Map<String, dynamic>?> _getUserDataForPost(String userId) async {
@@ -151,7 +154,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_userDataCache.containsKey(userId)) {
       return _userDataCache[userId];
     }
-    
+
     try {
       final userData = await authService.getUserDataById(userId);
       // Cache the result
@@ -162,9 +165,11 @@ class _HomeScreenState extends State<HomeScreen> {
       return null;
     }
   }
-  
+
   String _getInitialsFromUserData(Map<String, dynamic>? userData) {
-    if (userData == null || userData['fullName'] == null || userData['fullName'].toString().isEmpty) {
+    if (userData == null ||
+        userData['fullName'] == null ||
+        userData['fullName'].toString().isEmpty) {
       return 'U';
     }
     return _getInitials(userData['fullName'].toString());
@@ -176,7 +181,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final isDarkMode = theme.brightness == Brightness.dark;
     final textColor = theme.textTheme.bodyLarge?.color;
     final backgroundColor = theme.scaffoldBackgroundColor;
-    final containerColor = isDarkMode ? Colors.grey.shade800 : Colors.grey.shade100;
+    final containerColor =
+        isDarkMode ? Colors.grey.shade800 : Colors.grey.shade100;
     final iconColor = isDarkMode ? Colors.grey.shade400 : Colors.grey.shade600;
 
     return Scaffold(
@@ -186,23 +192,24 @@ class _HomeScreenState extends State<HomeScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             FutureBuilder<Map<String, dynamic>?>(
-              future: authService.getUserData(),
-              builder: (context, snapshot) {
-                // Always use the latest data
-                final userData = snapshot.data;
-                final photoURL = userData?['photoURL'] ?? userPhotoURL;
-                
-                return CircleAvatar(
-                  radius: 20,
-                  backgroundColor: Colors.blue,
-                  backgroundImage: _buildUserProfileImage(photoURL),
-                  child: (photoURL == null || photoURL.isEmpty) ? Text(
-                    userInitials.isEmpty ? 'U' : userInitials,
-                    style: const TextStyle(color: Colors.white),
-                  ) : null,
-                );
-              }
-            ),
+                future: authService.getUserData(),
+                builder: (context, snapshot) {
+                  // Always use the latest data
+                  final userData = snapshot.data;
+                  final photoURL = userData?['photoURL'] ?? userPhotoURL;
+
+                  return CircleAvatar(
+                    radius: 20,
+                    backgroundColor: Colors.blue,
+                    backgroundImage: _buildUserProfileImage(photoURL),
+                    child: (photoURL == null || photoURL.isEmpty)
+                        ? Text(
+                            userInitials.isEmpty ? 'U' : userInitials,
+                            style: const TextStyle(color: Colors.white),
+                          )
+                        : null,
+                  );
+                }),
             const SizedBox(width: 10),
             Flexible(
               child: Text(
@@ -266,9 +273,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: 20),
-              
+
               // Best Destination section
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -283,10 +290,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   TextButton(
                     onPressed: () {
                       // Navigate to all best destinations
-                      _navigateForward(
-                        const BestDestinationsScreen(),
-                        onReturn: () => _loadPosts()
-                      );
+                      _navigateForward(const BestDestinationsScreen(),
+                          onReturn: () => _loadPosts());
                     },
                     child: const Text(
                       'View all',
@@ -298,9 +303,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: 10),
-              
+
               // Best Destinations list
               if (_isLoading)
                 const Center(
@@ -340,9 +345,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     },
                   ),
                 ),
-              
+
               const SizedBox(height: 20),
-              
+
               // My Travel Notes
               if (_userPosts.isNotEmpty) ...[
                 const Text(
@@ -352,31 +357,31 @@ class _HomeScreenState extends State<HomeScreen> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                
+
                 const SizedBox(height: 10),
-                
+
                 // User's posts list
                 ListView.builder(
                   physics: const NeverScrollableScrollPhysics(),
                   shrinkWrap: true,
-                  itemCount: _userPosts.length > 3 ? 3 : _userPosts.length, // Show only first 3
+                  itemCount: _userPosts.length > 3
+                      ? 3
+                      : _userPosts.length, // Show only first 3
                   itemBuilder: (context, index) {
                     final post = _userPosts[index];
                     return _buildPostCard(post);
                   },
                 ),
-                
+
                 // View all button if there are more than 3 posts
-                if (_userPosts.length > 3) 
+                if (_userPosts.length > 3)
                   Align(
                     alignment: Alignment.center,
                     child: TextButton(
                       onPressed: () {
                         // Navigate to detail screen without specific postId to show all posts
-                        _navigateForward(
-                          const DetailScreen(),
-                          onReturn: () => _loadPosts()
-                        );
+                        _navigateForward(const DetailScreen(),
+                            onReturn: () => _loadPosts(), allowBack: true);
                       },
                       child: const Text(
                         'View all my notes',
@@ -387,10 +392,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                   ),
-                
+
                 const SizedBox(height: 20),
               ],
-              
+
               // Recent posts from other users section
               const Text(
                 'Discover Travel Notes',
@@ -399,9 +404,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              
+
               const SizedBox(height: 10),
-              
+
               // Recent posts list
               if (_isLoading)
                 const Center(
@@ -437,10 +442,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       const SizedBox(height: 20),
                       ElevatedButton(
                         onPressed: () {
-                          _navigateForward(
-                            const PostScreen(),
-                            onReturn: () => _loadPosts()
-                          );
+                          _navigateForward(const PostScreen(),
+                              onReturn: () => _loadPosts());
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.blue,
@@ -487,7 +490,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
-      
       bottomNavigationBar: CustomBottomNavBar(
         currentIndex: _selectedIndex,
         onTap: (index) {
@@ -498,24 +500,23 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-  
+
   Widget _buildDestinationCard(TravelPost post) {
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
     final textColor = theme.textTheme.bodyLarge?.color;
     final backgroundColor = theme.scaffoldBackgroundColor;
     final cardColor = theme.cardColor;
-    final containerColor = isDarkMode ? Colors.grey.shade800 : Colors.grey.shade100;
-    
+    final containerColor =
+        isDarkMode ? Colors.grey.shade800 : Colors.grey.shade100;
+
     // Check if this is the current user's post
     final isUserPost = post.userId == authService.currentUser?.uid;
-    
+
     return GestureDetector(
       onTap: () {
-        _navigateForward(
-          DetailScreen(postId: post.id),
-          onReturn: () => _loadPosts()
-        );
+        _navigateForward(DetailScreen(postId: post.id),
+            onReturn: () => _loadPosts(), allowBack: true);
       },
       child: Container(
         width: 180,
@@ -544,18 +545,21 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: Icon(
                       Icons.photo,
                       size: 50,
-                      color: isDarkMode ? Colors.grey.shade600 : Colors.grey.shade500,
+                      color: isDarkMode
+                          ? Colors.grey.shade600
+                          : Colors.grey.shade500,
                     ),
                   ),
                 ),
-                
+
               // Category tag overlay
               if (post.category.isNotEmpty)
                 Positioned(
                   top: 8,
                   left: 8,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: Colors.blue.shade900.withOpacity(0.7),
                       borderRadius: BorderRadius.circular(16),
@@ -570,14 +574,15 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                 ),
-                
+
               // Your post indicator for user's own posts
               if (isUserPost)
                 Positioned(
                   top: 40,
                   left: 8,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: Colors.orange.withOpacity(0.8),
                       borderRadius: BorderRadius.circular(16),
@@ -598,7 +603,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 top: 8,
                 right: 8,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: Colors.red.withOpacity(0.7),
                     borderRadius: BorderRadius.circular(16),
@@ -624,7 +630,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ),
-                
+
               // Title and details overlay at bottom
               Positioned(
                 bottom: 0,
@@ -668,7 +674,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           }
                         },
                       ),
-                      
+
                       Text(
                         post.title,
                         style: TextStyle(
@@ -689,21 +695,20 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-  
+
   Widget _buildPostCard(TravelPost post) {
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
     final textColor = theme.textTheme.bodyLarge?.color;
     final backgroundColor = theme.scaffoldBackgroundColor;
-    final containerColor = isDarkMode ? Colors.grey.shade800 : Colors.grey.shade100;
+    final containerColor =
+        isDarkMode ? Colors.grey.shade800 : Colors.grey.shade100;
     final iconColor = isDarkMode ? Colors.grey.shade400 : Colors.grey.shade600;
-    
+
     return GestureDetector(
       onTap: () {
-        _navigateForward(
-          DetailScreen(postId: post.id),
-          onReturn: () => _loadPosts()
-        );
+        _navigateForward(DetailScreen(postId: post.id),
+            onReturn: () => _loadPosts());
       },
       child: Container(
         margin: const EdgeInsets.all(8),
@@ -723,67 +728,70 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             // Post header with user info
             FutureBuilder<Map<String, dynamic>?>(
-              future: _getUserDataForPost(post.userId),
-              builder: (context, snapshot) {
-                final userData = snapshot.data;
-                
-                return Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                  child: Row(
-                    children: [
-                      userData != null 
-                        ? _buildUserAvatar(userData)
-                        : CircleAvatar(
-                            radius: 16,
-                            backgroundColor: Colors.blue,
-                            child: Icon(Icons.person, color: Colors.white, size: 16),
-                          ),
-                      const SizedBox(width: 12),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            userData != null ? userData['fullName'] ?? 'User' : 'User',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                              color: textColor,
+                future: _getUserDataForPost(post.userId),
+                builder: (context, snapshot) {
+                  final userData = snapshot.data;
+
+                  return Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                    child: Row(
+                      children: [
+                        userData != null
+                            ? _buildUserAvatar(userData)
+                            : CircleAvatar(
+                                radius: 16,
+                                backgroundColor: Colors.blue,
+                                child: Icon(Icons.person,
+                                    color: Colors.white, size: 16),
+                              ),
+                        const SizedBox(width: 12),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              userData != null
+                                  ? userData['fullName'] ?? 'User'
+                                  : 'User',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                                color: textColor,
+                              ),
                             ),
-                          ),
-                          Text(
-                            _formatDate(post.date),
-                            style: TextStyle(
-                              color: iconColor,
-                              fontSize: 12,
+                            Text(
+                              _formatDate(post.date),
+                              style: TextStyle(
+                                color: iconColor,
+                                fontSize: 12,
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                      const Spacer(),
-                      
-                      // Is user's post indicator
-                      if (post.userId == authService.currentUser?.uid)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.orange.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            'Your Post',
-                            style: TextStyle(
-                              color: Colors.orange,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                          ],
                         ),
-                    ],
-                  ),
-                );
-              }
-            ),
-            
+                        const Spacer(),
+
+                        // Is user's post indicator
+                        if (post.userId == authService.currentUser?.uid)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.orange.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              'Your Post',
+                              style: TextStyle(
+                                color: Colors.orange,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  );
+                }),
+
             // Post image
             Stack(
               children: [
@@ -797,7 +805,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   AspectRatio(
                     aspectRatio: 16 / 9,
                     child: Container(
-                      color: isDarkMode ? Colors.grey.shade800 : Colors.grey.shade300,
+                      color: isDarkMode
+                          ? Colors.grey.shade800
+                          : Colors.grey.shade300,
                       child: const Center(
                         child: Icon(
                           Icons.photo,
@@ -814,7 +824,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     top: 12,
                     left: 12,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
                         color: Colors.blue.shade900.withOpacity(0.7),
                         borderRadius: BorderRadius.circular(16),
@@ -859,16 +870,16 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: GestureDetector(
                           onTap: () {
                             // Navigate to map view if coordinates are available
-                            if (post.latitude != null && post.longitude != null) {
-                              _navigateForward(
-                                MapViewScreen(post: post),
-                                onReturn: () => {}
-                              );
+                            if (post.latitude != null &&
+                                post.longitude != null) {
+                              _navigateForward(MapViewScreen(post: post),
+                                  onReturn: () => {}, allowBack: true);
                             } else {
                               // Show snackbar if no coordinates
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                  content: Text('No location coordinates available for this post'),
+                                  content: Text(
+                                      'No location coordinates available for this post'),
                                   duration: Duration(seconds: 2),
                                 ),
                               );
@@ -877,7 +888,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: Text(
                             post.location,
                             style: TextStyle(
-                              color: isDarkMode ? Colors.grey.shade400 : Colors.grey.shade700,
+                              color: isDarkMode
+                                  ? Colors.grey.shade400
+                                  : Colors.grey.shade700,
                               fontSize: 14,
                               decoration: TextDecoration.underline,
                             ),
@@ -904,12 +917,12 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-  
+
   // Helper to build image from base64 or URL
   Widget _buildImage(String imageSource) {
     try {
       // Check if it's a base64 image
-      if (imageSource.startsWith('data:image') || 
+      if (imageSource.startsWith('data:image') ||
           RegExp(r'^(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=|[A-Za-z0-9+\/]{4})$')
               .hasMatch(imageSource)) {
         // It's base64, decode it
@@ -971,12 +984,12 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
   }
-  
+
   // Format date for display
   String _formatDate(DateTime date) {
     final now = DateTime.now();
     final difference = now.difference(date);
-    
+
     if (difference.inDays == 0) {
       return 'Today';
     } else if (difference.inDays == 1) {
@@ -989,18 +1002,31 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // Simple navigation
-  void _navigateForward(Widget destination, {VoidCallback? onReturn}) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => destination),
-    ).then((_) {
-      // Always refresh user data when returning from any screen
-      _loadUserData();
-      
-      if (onReturn != null) {
-        onReturn();
-      }
-    });
+  void _navigateForward(Widget destination,
+      {VoidCallback? onReturn, bool allowBack = false}) {
+    if (allowBack) {
+      // Use regular push for screens that should have back button (like DetailScreen)
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => destination),
+      ).then((_) {
+        _loadUserData();
+        if (onReturn != null) {
+          onReturn();
+        }
+      });
+    } else {
+      // Use pushReplacement for screens that shouldn't have back button
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => destination),
+      ).then((_) {
+        _loadUserData();
+        if (onReturn != null) {
+          onReturn();
+        }
+      });
+    }
   }
 
   // Add this helper method for building user profile images
@@ -1008,23 +1034,23 @@ class _HomeScreenState extends State<HomeScreen> {
     if (photoURL == null || photoURL.isEmpty) {
       return null;
     }
-    
+
     try {
       if (photoURL.startsWith('http') || photoURL.startsWith('https')) {
         // Network image
         return NetworkImage(photoURL);
-      } else if (RegExp(r'^(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=|[A-Za-z0-9+\/]{4})$')
-                 .hasMatch(photoURL)) {
+      } else if (RegExp(
+              r'^(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=|[A-Za-z0-9+\/]{4})$')
+          .hasMatch(photoURL)) {
         // Base64 image
-        final base64String = photoURL.contains(',') 
-            ? photoURL.split(',').last 
-            : photoURL;
+        final base64String =
+            photoURL.contains(',') ? photoURL.split(',').last : photoURL;
         return MemoryImage(base64Decode(base64String));
       }
     } catch (e) {
       print('Error building user profile image: $e');
     }
-    
+
     return null;
   }
 
@@ -1037,24 +1063,26 @@ class _HomeScreenState extends State<HomeScreen> {
         child: const Icon(Icons.person, color: Colors.white, size: 16),
       );
     }
-    
+
     final photoURL = userData['photoURL'];
     final userInitials = _getInitialsFromUserData(userData);
-    
+
     // Handle different image types
     if (photoURL != null && photoURL.toString().isNotEmpty) {
-      if (photoURL.toString().startsWith('http') || photoURL.toString().startsWith('https')) {
+      if (photoURL.toString().startsWith('http') ||
+          photoURL.toString().startsWith('https')) {
         return CircleAvatar(
           radius: 16,
           backgroundImage: NetworkImage(photoURL.toString()),
           backgroundColor: Colors.blue,
         );
-      } else if (RegExp(r'^(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=|[A-Za-z0-9+\/]{4})$')
-               .hasMatch(photoURL.toString())) {
+      } else if (RegExp(
+              r'^(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=|[A-Za-z0-9+\/]{4})$')
+          .hasMatch(photoURL.toString())) {
         // For base64 images
         try {
-          final base64String = photoURL.toString().contains(',') 
-              ? photoURL.toString().split(',').last 
+          final base64String = photoURL.toString().contains(',')
+              ? photoURL.toString().split(',').last
               : photoURL.toString();
           return CircleAvatar(
             radius: 16,
@@ -1079,7 +1107,7 @@ class _HomeScreenState extends State<HomeScreen> {
         }
       }
     }
-    
+
     // Fallback to initials if no valid image
     return CircleAvatar(
       radius: 16,
@@ -1094,4 +1122,4 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-} 
+}
