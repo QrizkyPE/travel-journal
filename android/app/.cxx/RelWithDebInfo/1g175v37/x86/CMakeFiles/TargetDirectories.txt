@@ -1,0 +1,2 @@
+C:/Test/travel-journal/android/app/.cxx/RelWithDebInfo/1g175v37/x86/CMakeFiles/edit_cache.dir
+C:/Test/travel-journal/android/app/.cxx/RelWithDebInfo/1g175v37/x86/CMakeFiles/rebuild_cache.dir

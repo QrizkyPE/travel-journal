@@ -921,40 +921,57 @@ class _HomeScreenState extends State<HomeScreen> {
   // Helper to build image from base64 or URL
   Widget _buildImage(String imageSource) {
     try {
-      // Check if it's a base64 image
-      if (imageSource.startsWith('data:image') ||
-          RegExp(r'^(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=|[A-Za-z0-9+\/]{4})$')
-              .hasMatch(imageSource)) {
-        // It's base64, decode it
+      // Check if it's a base64 image (data URL format)
+      if (imageSource.startsWith('data:image/')) {
+        final base64String = imageSource.split(',').last;
         return Image.memory(
-          base64Decode(imageSource.split(',').last),
+          base64Decode(base64String),
           height: 180,
           width: double.infinity,
           fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            print('Error loading base64 image: $error');
+            return _buildErrorImage();
+          },
         );
-      } else if (imageSource.startsWith('assets/')) {
-        // It's an asset
+      }
+      // Check if it's a pure base64 string (without data URL prefix)
+      else if (_isBase64(imageSource)) {
+        return Image.memory(
+          base64Decode(imageSource),
+          height: 180,
+          width: double.infinity,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            print('Error loading base64 image: $error');
+            return _buildErrorImage();
+          },
+        );
+      }
+      // Check if it's an asset
+      else if (imageSource.startsWith('assets/')) {
         return Image.asset(
           imageSource,
           height: 180,
           width: double.infinity,
           fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            print('Error loading asset image: $error');
+            return _buildErrorImage();
+          },
         );
-      } else {
-        // Assume it's a network URL
+      }
+      // Assume it's a network URL
+      else if (imageSource.startsWith('http://') ||
+          imageSource.startsWith('https://')) {
         return Image.network(
           imageSource,
           height: 180,
           width: double.infinity,
           fit: BoxFit.cover,
           errorBuilder: (context, error, stackTrace) {
-            return Container(
-              height: 180,
-              color: Colors.grey.shade300,
-              child: const Center(
-                child: Icon(Icons.error, color: Colors.red),
-              ),
-            );
+            print('Error loading network image: $error');
+            return _buildErrorImage();
           },
           loadingBuilder: (context, child, loadingProgress) {
             if (loadingProgress == null) return child;
@@ -973,16 +990,43 @@ class _HomeScreenState extends State<HomeScreen> {
           },
         );
       }
+      // If none of the above, show error
+      else {
+        print('Unknown image format: $imageSource');
+        return _buildErrorImage();
+      }
     } catch (e) {
       print('Error displaying image: $e');
-      return Container(
-        height: 180,
-        color: Colors.grey.shade300,
-        child: const Center(
-          child: Icon(Icons.broken_image, color: Colors.red),
-        ),
-      );
+      return _buildErrorImage();
     }
+  }
+
+// Helper method to check if string is valid base64
+  bool _isBase64(String str) {
+    try {
+      base64Decode(str);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+// Helper method for error image
+  Widget _buildErrorImage() {
+    return Container(
+      height: 180,
+      color: Colors.grey.shade300,
+      child: const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.broken_image, color: Colors.red, size: 40),
+            SizedBox(height: 8),
+            Text('Image not available', style: TextStyle(fontSize: 12)),
+          ],
+        ),
+      ),
+    );
   }
 
   // Format date for display
@@ -1036,16 +1080,19 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     try {
-      if (photoURL.startsWith('http') || photoURL.startsWith('https')) {
-        // Network image
-        return NetworkImage(photoURL);
-      } else if (RegExp(
-              r'^(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=|[A-Za-z0-9+\/]{4})$')
-          .hasMatch(photoURL)) {
-        // Base64 image
-        final base64String =
-            photoURL.contains(',') ? photoURL.split(',').last : photoURL;
+      // Handle data URL format
+      if (photoURL.startsWith('data:image/')) {
+        final base64String = photoURL.split(',').last;
         return MemoryImage(base64Decode(base64String));
+      }
+      // Handle network URLs
+      else if (photoURL.startsWith('http://') ||
+          photoURL.startsWith('https://')) {
+        return NetworkImage(photoURL);
+      }
+      // Handle pure base64
+      else if (_isBase64(photoURL)) {
+        return MemoryImage(base64Decode(photoURL));
       }
     } catch (e) {
       print('Error building user profile image: $e');
@@ -1067,48 +1114,49 @@ class _HomeScreenState extends State<HomeScreen> {
     final photoURL = userData['photoURL'];
     final userInitials = _getInitialsFromUserData(userData);
 
-    // Handle different image types
     if (photoURL != null && photoURL.toString().isNotEmpty) {
-      if (photoURL.toString().startsWith('http') ||
-          photoURL.toString().startsWith('https')) {
-        return CircleAvatar(
-          radius: 16,
-          backgroundImage: NetworkImage(photoURL.toString()),
-          backgroundColor: Colors.blue,
-        );
-      } else if (RegExp(
-              r'^(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=|[A-Za-z0-9+\/]{4})$')
-          .hasMatch(photoURL.toString())) {
-        // For base64 images
-        try {
-          final base64String = photoURL.toString().contains(',')
-              ? photoURL.toString().split(',').last
-              : photoURL.toString();
+      try {
+        // Handle data URL format base64
+        if (photoURL.toString().startsWith('data:image/')) {
+          final base64String = photoURL.toString().split(',').last;
           return CircleAvatar(
             radius: 16,
             backgroundImage: MemoryImage(base64Decode(base64String)),
             backgroundColor: Colors.blue,
-          );
-        } catch (e) {
-          print('Error decoding base64 image: $e');
-          // Fall back to initials on error
-          return CircleAvatar(
-            radius: 16,
-            backgroundColor: Colors.blue,
-            child: Text(
-              userInitials,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            onBackgroundImageError: (error, stackTrace) {
+              print('Error loading avatar image: $error');
+            },
           );
         }
+        // Handle network URLs
+        else if (photoURL.toString().startsWith('http://') ||
+            photoURL.toString().startsWith('https://')) {
+          return CircleAvatar(
+            radius: 16,
+            backgroundImage: NetworkImage(photoURL.toString()),
+            backgroundColor: Colors.blue,
+            onBackgroundImageError: (error, stackTrace) {
+              print('Error loading network avatar: $error');
+            },
+          );
+        }
+        // Handle pure base64
+        else if (_isBase64(photoURL.toString())) {
+          return CircleAvatar(
+            radius: 16,
+            backgroundImage: MemoryImage(base64Decode(photoURL.toString())),
+            backgroundColor: Colors.blue,
+            onBackgroundImageError: (error, stackTrace) {
+              print('Error loading base64 avatar: $error');
+            },
+          );
+        }
+      } catch (e) {
+        print('Error creating avatar: $e');
       }
     }
 
-    // Fallback to initials if no valid image
+    // Fallback to initials
     return CircleAvatar(
       radius: 16,
       backgroundColor: Colors.blue,
