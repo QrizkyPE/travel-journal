@@ -24,9 +24,10 @@ class ThemeProvider extends ChangeNotifier {
   }
 
   Future<void> toggleTheme() async {
-    _themeMode = _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
+    _themeMode =
+        _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
     notifyListeners();
-    
+
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool(_themeModeKey, _themeMode == ThemeMode.dark);
@@ -51,9 +52,10 @@ class AppTheme {
       foregroundColor: Colors.black,
       elevation: 0,
       iconTheme: IconThemeData(color: Colors.black87),
-      titleTextStyle: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold),
+      titleTextStyle:
+          TextStyle(color: Colors.black87, fontWeight: FontWeight.bold),
     ),
-    cardTheme: CardTheme(
+    cardTheme: CardThemeData(
       color: Colors.white,
       elevation: 2,
       shape: RoundedRectangleBorder(
@@ -75,9 +77,10 @@ class AppTheme {
       selectedItemColor: Colors.blue,
       unselectedItemColor: Colors.grey,
     ),
-    dialogTheme: DialogTheme(
+    dialogTheme: DialogThemeData(
       backgroundColor: Colors.white,
-      titleTextStyle: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold, fontSize: 18),
+      titleTextStyle: TextStyle(
+          color: Colors.black87, fontWeight: FontWeight.bold, fontSize: 18),
     ),
   );
 
@@ -94,9 +97,10 @@ class AppTheme {
       foregroundColor: Colors.white,
       elevation: 0,
       iconTheme: IconThemeData(color: Colors.white),
-      titleTextStyle: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+      titleTextStyle:
+          TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
     ),
-    cardTheme: CardTheme(
+    cardTheme: CardThemeData(
       color: Color(0xFF1E1E1E), // Slightly lighter than background
       elevation: 2,
       shape: RoundedRectangleBorder(
@@ -118,9 +122,10 @@ class AppTheme {
       selectedItemColor: Colors.blue,
       unselectedItemColor: Colors.grey.shade400,
     ),
-    dialogTheme: DialogTheme(
+    dialogTheme: DialogThemeData(
       backgroundColor: Color(0xFF1E1E1E),
-      titleTextStyle: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+      titleTextStyle: TextStyle(
+          color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
     ),
   );
-} 
+}

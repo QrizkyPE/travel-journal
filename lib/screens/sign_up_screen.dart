@@ -33,8 +33,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
     final isDarkMode = theme.brightness == Brightness.dark;
     final textColor = theme.textTheme.bodyLarge?.color;
     final backgroundColor = theme.scaffoldBackgroundColor;
-    final containerColor = isDarkMode ? Colors.grey.shade800 : Colors.grey.shade100;
-    
+    final containerColor =
+        isDarkMode ? Colors.grey.shade800 : Colors.grey.shade100;
+
     return Scaffold(
       backgroundColor: backgroundColor,
       body: SafeArea(
@@ -55,9 +56,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
               //     ),
               //   ),
               // ),
-              
+
               const SizedBox(height: 30),
-              
+
               // Sign up header
               Text(
                 'Create Account',
@@ -67,9 +68,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   color: textColor,
                 ),
               ),
-              
+
               const SizedBox(height: 12),
-              
+
               // Subtitle
               Text(
                 'Please fill the details to create an account',
@@ -78,64 +79,72 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   color: textColor?.withOpacity(0.6),
                 ),
               ),
-              
+
               const SizedBox(height: 30),
-              
+
               // Name field
               TextFormField(
                 controller: _nameController,
                 keyboardType: TextInputType.name,
                 decoration: InputDecoration(
                   hintText: 'Full Name',
-                  hintStyle: TextStyle(color: isDarkMode ? Colors.grey.shade400 : Colors.grey),
+                  hintStyle: TextStyle(
+                      color: isDarkMode ? Colors.grey.shade400 : Colors.grey),
                   filled: true,
                   fillColor: containerColor,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
                   ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                 ),
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Email field
               TextFormField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
                 decoration: InputDecoration(
                   hintText: 'Email',
-                  hintStyle: TextStyle(color: isDarkMode ? Colors.grey.shade400 : Colors.grey),
+                  hintStyle: TextStyle(
+                      color: isDarkMode ? Colors.grey.shade400 : Colors.grey),
                   filled: true,
                   fillColor: containerColor,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
                   ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                 ),
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Password field
               TextFormField(
                 controller: _passwordController,
                 obscureText: _obscurePassword,
                 decoration: InputDecoration(
                   hintText: 'Password',
-                  hintStyle: TextStyle(color: isDarkMode ? Colors.grey.shade400 : Colors.grey),
+                  hintStyle: TextStyle(
+                      color: isDarkMode ? Colors.grey.shade400 : Colors.grey),
                   filled: true,
                   fillColor: containerColor,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
                   ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                      _obscurePassword
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined,
                       color: isDarkMode ? Colors.grey.shade400 : Colors.grey,
                     ),
                     onPressed: () {
@@ -146,26 +155,30 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Confirm Password field
               TextFormField(
                 controller: _confirmPasswordController,
                 obscureText: _obscureConfirmPassword,
                 decoration: InputDecoration(
                   hintText: 'Confirm Password',
-                  hintStyle: TextStyle(color: isDarkMode ? Colors.grey.shade400 : Colors.grey),
+                  hintStyle: TextStyle(
+                      color: isDarkMode ? Colors.grey.shade400 : Colors.grey),
                   filled: true,
                   fillColor: containerColor,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
                   ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _obscureConfirmPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                      _obscureConfirmPassword
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined,
                       color: isDarkMode ? Colors.grey.shade400 : Colors.grey,
                     ),
                     onPressed: () {
@@ -176,9 +189,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 24),
-              
+
               // Sign up button
               SizedBox(
                 width: double.infinity,
@@ -193,16 +206,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       _showSnackBar('Please fill in all fields');
                       return;
                     }
-                    
+
                     // Validate password match
-                    if (_passwordController.text != _confirmPasswordController.text) {
+                    if (_passwordController.text !=
+                        _confirmPasswordController.text) {
                       _showSnackBar('Passwords do not match');
                       return;
                     }
-                    
+
                     // Show loading indicator
                     _showLoadingDialog();
-                    
+
                     try {
                       // Register user with Firebase
                       final user = await authService.signUpWithEmailAndPassword(
@@ -210,18 +224,19 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         password: _passwordController.text.trim(),
                         fullName: _nameController.text.trim(),
                       );
-                      
+
                       // Check if registration was successful
                       if (user != null) {
                         print("Sign up successful: ${user.uid}");
-                        
+
                         // Give Firebase some time to update the user profile
-                        await Future.delayed(const Duration(milliseconds: 1000));
-                        
+                        await Future.delayed(
+                            const Duration(milliseconds: 1000));
+
                         // Dismiss loading dialog and navigate to home
                         if (context.mounted) {
                           Navigator.pop(context); // Dismiss loading dialog
-                          
+
                           // Show success message
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
@@ -229,18 +244,20 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               backgroundColor: Colors.green,
                             ),
                           );
-                          
+
                           // Navigate to home screen
                           Navigator.pushReplacement(
                             context,
-                            MaterialPageRoute(builder: (context) => const HomeScreen()),
+                            MaterialPageRoute(
+                                builder: (context) => const SignInScreen()),
                           );
                         }
                       } else {
                         // Something went wrong
                         if (context.mounted) {
                           Navigator.pop(context); // Dismiss loading dialog
-                          _showSnackBar('Registration failed. Please try again.');
+                          _showSnackBar(
+                              'Registration failed. Please try again.');
                         }
                       }
                     } catch (e) {
@@ -248,18 +265,18 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       // Dismiss loading dialog and show error
                       if (context.mounted) {
                         Navigator.pop(context); // Dismiss loading dialog
-                        
+
                         // Handle the special case where account was created but profile setup failed
-                        if (e.toString().contains('Account was created but profile setup failed')) {
+                        if (e.toString().contains(
+                            'Account was created but profile setup failed')) {
                           // Show alert dialog with option to continue
                           showDialog(
                             context: context,
                             builder: (context) => AlertDialog(
                               title: const Text('Account Created'),
                               content: const Text(
-                                'Your account was created successfully, but there was an issue setting up your profile. '
-                                'You can still sign in with your credentials.'
-                              ),
+                                  'Your account was created successfully, but there was an issue setting up your profile. '
+                                  'You can still sign in with your credentials.'),
                               actions: [
                                 TextButton(
                                   onPressed: () {
@@ -267,7 +284,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                     // Navigate to sign in screen
                                     Navigator.pushReplacement(
                                       context,
-                                      MaterialPageRoute(builder: (context) => const SignInScreen()),
+                                      MaterialPageRoute(
+                                          builder: (context) =>
+                                              const SignInScreen()),
                                     );
                                   },
                                   child: const Text('Sign In'),
@@ -279,7 +298,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                     if (authService.currentUser != null) {
                                       Navigator.pushReplacement(
                                         context,
-                                        MaterialPageRoute(builder: (context) => const HomeScreen()),
+                                        MaterialPageRoute(
+                                            builder: (context) =>
+                                                const HomeScreen()),
                                       );
                                     }
                                   },
@@ -311,9 +332,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 20),
-              
+
               // Sign in link
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -326,7 +347,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     onPressed: () {
                       Navigator.pushReplacement(
                         context,
-                        MaterialPageRoute(builder: (context) => const SignInScreen()),
+                        MaterialPageRoute(
+                            builder: (context) => const SignInScreen()),
                       );
                     },
                     child: const Text(
@@ -339,9 +361,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: 20),
-              
+
               // Or connect divider
               Row(
                 children: [
@@ -355,7 +377,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Text(
                       'Or connect with',
-                      style: TextStyle(color: isDarkMode ? Colors.grey.shade400 : Colors.grey.shade600),
+                      style: TextStyle(
+                          color: isDarkMode
+                              ? Colors.grey.shade400
+                              : Colors.grey.shade600),
                     ),
                   ),
                   Expanded(
@@ -366,9 +391,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: 30),
-              
+
               // Social login buttons
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -382,7 +407,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     },
                   ),
                   const SizedBox(width: 24),
-                  
+
                   // Instagram
                   _socialLoginButton(
                     icon: Icons.camera_alt,
@@ -396,7 +421,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     },
                   ),
                   const SizedBox(width: 24),
-                  
+
                   // Twitter
                   // _socialLoginButton(
                   //   color: Colors.lightBlue,
@@ -407,19 +432,20 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   // ),
                 ],
               ),
-              
+
               const SizedBox(height: 32),
-              
+
               // Bottom indicator
               Container(
                 width: 70,
                 height: 5,
                 decoration: BoxDecoration(
-                  color: isDarkMode ? Colors.grey.shade700 : Colors.grey.shade300,
+                  color:
+                      isDarkMode ? Colors.grey.shade700 : Colors.grey.shade300,
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
-              
+
               const SizedBox(height: 20),
             ],
           ),
@@ -427,7 +453,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       ),
     );
   }
-  
+
   Widget _socialLoginButton({
     Color? color,
     Gradient? gradient,
@@ -452,12 +478,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
       SnackBar(content: Text(message)),
     );
   }
-  
+
   void _showLoadingDialog() {
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
     final textColor = theme.textTheme.bodyLarge?.color;
-    
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -474,4 +500,4 @@ class _SignUpScreenState extends State<SignUpScreen> {
       },
     );
   }
-} 
+}

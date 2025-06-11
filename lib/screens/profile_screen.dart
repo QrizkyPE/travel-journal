@@ -63,6 +63,85 @@ class _ProfileScreenState extends State<ProfileScreen> {
         : 'U';
   }
 
+  bool _isBase64(String str) {
+    try {
+      base64Decode(str);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Widget _buildProfileImageWidget() {
+    final photoURL = _userData?['photoURL'];
+
+    if (photoURL == null || photoURL.toString().isEmpty) {
+      return CircleAvatar(
+        radius: 60,
+        backgroundColor: Colors.pink.shade100,
+        child: Text(
+          _userInitials,
+          style: const TextStyle(
+            fontSize: 36,
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      );
+    }
+
+    try {
+      // Handle data URL format base64
+      if (photoURL.toString().startsWith('data:image/')) {
+        final base64String = photoURL.toString().split(',').last;
+        return CircleAvatar(
+          radius: 60,
+          backgroundImage: MemoryImage(base64Decode(base64String)),
+          onBackgroundImageError: (error, stackTrace) {
+            print('Error loading base64 profile image: $error');
+          },
+        );
+      }
+      // Handle network URLs
+      else if (photoURL.toString().startsWith('http://') ||
+          photoURL.toString().startsWith('https://')) {
+        return CircleAvatar(
+          radius: 60,
+          backgroundImage: NetworkImage(photoURL.toString()),
+          onBackgroundImageError: (error, stackTrace) {
+            print('Error loading network profile image: $error');
+          },
+        );
+      }
+      // Handle pure base64
+      else if (_isBase64(photoURL.toString())) {
+        return CircleAvatar(
+          radius: 60,
+          backgroundImage: MemoryImage(base64Decode(photoURL.toString())),
+          onBackgroundImageError: (error, stackTrace) {
+            print('Error loading base64 profile image: $error');
+          },
+        );
+      }
+    } catch (e) {
+      print('Error creating profile image: $e');
+    }
+
+    // Fallback to initials
+    return CircleAvatar(
+      radius: 60,
+      backgroundColor: Colors.pink.shade100,
+      child: Text(
+        _userInitials,
+        style: const TextStyle(
+          fontSize: 36,
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -109,32 +188,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Center(
                     child: Stack(
                       children: [
-                        if (_userData != null && _userData!['photoURL'] != null)
-                          CircleAvatar(
-                            radius: 60,
-                            backgroundImage:
-                                _buildProfileImage(_userData!['photoURL']),
-                          )
-                        else
-                          CircleAvatar(
-                            radius: 60,
-                            backgroundColor: Colors.pink.shade100,
-                            child: Image.asset(
-                              'assets/images/default_avatar.png',
-                              height: 80,
-                              width: 80,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) =>
-                                  Text(
-                                _userInitials,
-                                style: const TextStyle(
-                                  fontSize: 36,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ),
+                        _buildProfileImageWidget(),
                       ],
                     ),
                   ),
@@ -227,7 +281,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       activeColor: Colors.blue,
                     ),
                     onTap: () {
-                      
                       Provider.of<ThemeProvider>(context, listen: false)
                           .toggleTheme();
                     },
@@ -315,24 +368,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   // Helper method to build profile image
-  ImageProvider _buildProfileImage(String? imageSource) {
-    try {
-      if (imageSource == null) {
-        return const AssetImage('assets/images/default_avatar.png');
-      }
+  ImageProvider? _buildProfileImage(String? imageSource) {
+    if (imageSource == null || imageSource.isEmpty) {
+      return null;
+    }
 
-      if (imageSource.startsWith('data:image') ||
-          RegExp(r'^(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=|[A-Za-z0-9+\/]{4})$')
-              .hasMatch(imageSource)) {
-        // It's base64, decode it
-        return MemoryImage(base64Decode(imageSource.split(',').last));
-      } else {
-        // Assume it's a network URL
+    try {
+      // Handle data URL format
+      if (imageSource.startsWith('data:image/')) {
+        final base64String = imageSource.split(',').last;
+        return MemoryImage(base64Decode(base64String));
+      }
+      // Handle network URLs
+      else if (imageSource.startsWith('http://') ||
+          imageSource.startsWith('https://')) {
         return NetworkImage(imageSource);
       }
+      // Handle pure base64
+      else if (_isBase64(imageSource)) {
+        return MemoryImage(base64Decode(imageSource));
+      }
     } catch (e) {
-      print('Error loading profile image: $e');
-      return const AssetImage('assets/images/default_avatar.png');
+      print('Error building profile image: $e');
     }
+
+    return null;
   }
 }

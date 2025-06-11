@@ -32,7 +32,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     try {
       // Use the stream and take the first value
       final favorites = await travelPostService.getFavoritePosts().first;
-      
+
       if (mounted) {
         setState(() {
           _favoritePosts = favorites;
@@ -45,7 +45,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
         setState(() {
           _isLoading = false;
         });
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error loading favorites: $e')),
         );
@@ -60,7 +60,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     final textColor = theme.textTheme.bodyLarge?.color;
     final backgroundColor = theme.scaffoldBackgroundColor;
     final iconColor = isDarkMode ? Colors.grey.shade400 : Colors.grey.shade600;
-    
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -145,13 +145,14 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     final isDarkMode = theme.brightness == Brightness.dark;
     final textColor = theme.textTheme.bodyLarge?.color;
     final backgroundColor = theme.scaffoldBackgroundColor;
-    final containerColor = isDarkMode ? Colors.grey.shade800 : Colors.grey.shade300;
+    final containerColor =
+        isDarkMode ? Colors.grey.shade800 : Colors.grey.shade300;
     final iconColor = isDarkMode ? Colors.grey.shade400 : Colors.grey.shade600;
-    
+
     // Current user ID
     final currentUserId = authService.currentUser?.uid;
     final isCurrentUserPost = post.userId == currentUserId;
-    
+
     return FutureBuilder<Map<String, dynamic>?>(
       future: AuthService().getUserDataById(post.userId),
       builder: (context, snapshot) {
@@ -159,7 +160,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
         String authorName = isCurrentUserPost ? "You" : "User";
         String authorInitials = "U";
         String? photoURL;
-        
+
         // Update with actual data if available
         if (snapshot.hasData && snapshot.data != null) {
           final userData = snapshot.data!;
@@ -169,7 +170,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
           authorInitials = _getInitials(userData['fullName'] ?? "User");
           photoURL = userData['photoURL'];
         }
-      
+
         return GestureDetector(
           onTap: () {
             Navigator.push(
@@ -194,22 +195,9 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                   child: Row(
                     children: [
                       // Author photo
-                      CircleAvatar(
-                        radius: 18,
-                        backgroundImage: photoURL != null ? NetworkImage(photoURL) : null,
-                        backgroundColor: Colors.blue,
-                        child: photoURL == null
-                            ? Text(
-                                authorInitials,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              )
-                            : null,
-                      ),
+                      _buildAuthorAvatar(photoURL, authorInitials),
                       const SizedBox(width: 12),
-                      
+
                       // Author name
                       Expanded(
                         child: Text(
@@ -223,7 +211,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      
+
                       // Unlike/Remove from favorites button
                       IconButton(
                         icon: const Icon(Icons.favorite, color: Colors.red),
@@ -243,11 +231,12 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                     ],
                   ),
                 ),
-                
+
                 // Post image
                 if (post.imageUrl != null)
                   ClipRRect(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                    borderRadius:
+                        const BorderRadius.vertical(top: Radius.circular(4)),
                     child: _buildImage(post.imageUrl!),
                   )
                 else
@@ -255,7 +244,8 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                     height: 140,
                     decoration: BoxDecoration(
                       color: containerColor,
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                      borderRadius:
+                          const BorderRadius.vertical(top: Radius.circular(4)),
                     ),
                     child: Center(
                       child: Icon(
@@ -265,7 +255,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                       ),
                     ),
                   ),
-                
+
                 // Post details
                 Padding(
                   padding: const EdgeInsets.all(16),
@@ -283,9 +273,9 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      
+
                       const SizedBox(height: 8),
-                      
+
                       // Description
                       Text(
                         post.description,
@@ -296,9 +286,9 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                           fontSize: 14,
                         ),
                       ),
-                      
+
                       const SizedBox(height: 12),
-                      
+
                       // Location and date in a row that won't overflow
                       Row(
                         children: [
@@ -326,9 +316,9 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                               ],
                             ),
                           ),
-                          
+
                           const SizedBox(width: 8),
-                          
+
                           // Date
                           Text(
                             _formatDate(post.date),
@@ -355,10 +345,13 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     final nameParts = fullName.split(' ');
     if (nameParts.isEmpty) return 'U';
     if (nameParts.length == 1) {
-      return nameParts[0].isNotEmpty ? nameParts[0].substring(0, 1).toUpperCase() : 'U';
+      return nameParts[0].isNotEmpty
+          ? nameParts[0].substring(0, 1).toUpperCase()
+          : 'U';
     }
-    return (nameParts[0].isNotEmpty && nameParts[1].isNotEmpty) 
-        ? (nameParts[0].substring(0, 1) + nameParts[1].substring(0, 1)).toUpperCase()
+    return (nameParts[0].isNotEmpty && nameParts[1].isNotEmpty)
+        ? (nameParts[0].substring(0, 1) + nameParts[1].substring(0, 1))
+            .toUpperCase()
         : 'U';
   }
 
@@ -366,44 +359,62 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   Widget _buildImage(String imageSource) {
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
-    final containerColor = isDarkMode ? Colors.grey.shade800 : Colors.grey.shade300;
+    final containerColor =
+        isDarkMode ? Colors.grey.shade800 : Colors.grey.shade300;
     final iconColor = isDarkMode ? Colors.grey.shade400 : Colors.grey.shade600;
-    
+
     try {
-      // Check if it's a base64 image
-      if (imageSource.startsWith('data:image') || 
-          RegExp(r'^(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=|[A-Za-z0-9+\/]{4})$')
-              .hasMatch(imageSource)) {
-        // It's base64, decode it
+      // Check if it's a base64 image (data URL format)
+      if (imageSource.startsWith('data:image/')) {
+        final base64String = imageSource.split(',').last;
         return Image.memory(
-          base64Decode(imageSource.split(',').last),
+          base64Decode(base64String),
           height: 180,
           width: double.infinity,
           fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            print('Error loading base64 image: $error');
+            return _buildErrorImage();
+          },
         );
-      } else if (imageSource.startsWith('assets/')) {
-        // It's an asset
+      }
+      // Check if it's a pure base64 string (without data URL prefix)
+      else if (_isBase64(imageSource)) {
+        return Image.memory(
+          base64Decode(imageSource),
+          height: 180,
+          width: double.infinity,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            print('Error loading base64 image: $error');
+            return _buildErrorImage();
+          },
+        );
+      }
+      // Check if it's an asset
+      else if (imageSource.startsWith('assets/')) {
         return Image.asset(
           imageSource,
           height: 180,
           width: double.infinity,
           fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            print('Error loading asset image: $error');
+            return _buildErrorImage();
+          },
         );
-      } else {
-        // Assume it's a network URL
+      }
+      // Check if it's a network URL
+      else if (imageSource.startsWith('http://') ||
+          imageSource.startsWith('https://')) {
         return Image.network(
           imageSource,
           height: 180,
           width: double.infinity,
           fit: BoxFit.cover,
           errorBuilder: (context, error, stackTrace) {
-            return Container(
-              height: 180,
-              color: containerColor,
-              child: Center(
-                child: Icon(Icons.error, color: Colors.red),
-              ),
-            );
+            print('Error loading network image: $error');
+            return _buildErrorImage();
           },
           loadingBuilder: (context, child, loadingProgress) {
             if (loadingProgress == null) return child;
@@ -422,19 +433,133 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
           },
         );
       }
+      // If none of the above, show error
+      else {
+        print('Unknown image format: $imageSource');
+        return _buildErrorImage();
+      }
     } catch (e) {
       print('Error displaying image: $e');
-      return Container(
-        height: 180,
-        color: containerColor,
-        child: Center(
-          child: Icon(Icons.broken_image, color: Colors.red),
+      return _buildErrorImage();
+    }
+  }
+
+// Helper method to check if string is valid base64
+  bool _isBase64(String str) {
+    try {
+      base64Decode(str);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+// Helper method for error image
+  Widget _buildErrorImage() {
+    final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
+    final containerColor =
+        isDarkMode ? Colors.grey.shade800 : Colors.grey.shade300;
+    final iconColor = isDarkMode ? Colors.grey.shade400 : Colors.grey.shade600;
+
+    return Container(
+      height: 180,
+      color: containerColor,
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.broken_image,
+              color: iconColor,
+              size: 40,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Image not available',
+              style: TextStyle(
+                fontSize: 12,
+                color: iconColor,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAuthorAvatar(String? photoURL, String initials) {
+    if (photoURL == null || photoURL.isEmpty) {
+      return CircleAvatar(
+        radius: 18,
+        backgroundColor: Colors.blue,
+        child: Text(
+          initials,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 12,
+          ),
         ),
       );
     }
+
+    try {
+      // Handle data URL format base64
+      if (photoURL.startsWith('data:image/')) {
+        final base64String = photoURL.split(',').last;
+        return CircleAvatar(
+          radius: 18,
+          backgroundImage: MemoryImage(base64Decode(base64String)),
+          backgroundColor: Colors.blue,
+          onBackgroundImageError: (error, stackTrace) {
+            print('Error loading avatar image: $error');
+          },
+        );
+      }
+      // Handle network URLs
+      else if (photoURL.startsWith('http://') ||
+          photoURL.startsWith('https://')) {
+        return CircleAvatar(
+          radius: 18,
+          backgroundImage: NetworkImage(photoURL),
+          backgroundColor: Colors.blue,
+          onBackgroundImageError: (error, stackTrace) {
+            print('Error loading network avatar: $error');
+          },
+        );
+      }
+      // Handle pure base64
+      else if (_isBase64(photoURL)) {
+        return CircleAvatar(
+          radius: 18,
+          backgroundImage: MemoryImage(base64Decode(photoURL)),
+          backgroundColor: Colors.blue,
+          onBackgroundImageError: (error, stackTrace) {
+            print('Error loading base64 avatar: $error');
+          },
+        );
+      }
+    } catch (e) {
+      print('Error creating avatar: $e');
+    }
+
+    // Fallback to initials
+    return CircleAvatar(
+      radius: 18,
+      backgroundColor: Colors.blue,
+      child: Text(
+        initials,
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+          fontSize: 12,
+        ),
+      ),
+    );
   }
 
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year}';
   }
-} 
+}

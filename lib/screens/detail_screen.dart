@@ -356,51 +356,17 @@ class _DetailScreenState extends State<DetailScreen> {
                             CircleAvatar(
                               radius: 16,
                               backgroundColor: Colors.blue,
-                              backgroundImage: userData['photoURL'] != null &&
-                                      userData['photoURL']
-                                          .toString()
-                                          .isNotEmpty &&
-                                      (userData['photoURL']
-                                              .toString()
-                                              .startsWith('http') ||
-                                          userData['photoURL']
-                                              .toString()
-                                              .startsWith('https'))
-                                  ? NetworkImage(userData['photoURL'])
-                                  : null,
-                              child: userData['photoURL'] == null ||
-                                      userData['photoURL'].toString().isEmpty ||
-                                      (!userData['photoURL']
-                                              .toString()
-                                              .startsWith('http') &&
-                                          !userData['photoURL']
-                                              .toString()
-                                              .startsWith('https'))
-                                  ? (userData['photoURL'] != null &&
-                                          userData['photoURL']
-                                              .toString()
-                                              .isNotEmpty &&
-                                          RegExp(r'^(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=|[A-Za-z0-9+\/]{4})$')
-                                              .hasMatch(userData['photoURL']
-                                                  .toString()))
-                                      ? Image.memory(
-                                          base64Decode(userData['photoURL']
-                                              .toString()
-                                              .split(',')
-                                              .last),
-                                          width: 32,
-                                          height: 32,
-                                          fit: BoxFit.cover,
-                                        )
-                                      : Text(
-                                          _getInitials(
-                                              userData['fullName'] ?? 'User'),
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        )
+                              backgroundImage: _buildUserAvatarImage(userData),
+                              child: _buildUserAvatarImage(userData) == null
+                                  ? Text(
+                                      _getInitials(
+                                          userData['fullName'] ?? 'User'),
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    )
                                   : null,
                             ),
                             const SizedBox(width: 8),
@@ -584,49 +550,15 @@ class _DetailScreenState extends State<DetailScreen> {
                         ? CircleAvatar(
                             radius: 24,
                             backgroundColor: Colors.blue,
-                            backgroundImage: _userData!['photoURL'] != null &&
-                                    _userData!['photoURL']
-                                        .toString()
-                                        .isNotEmpty &&
-                                    (_userData!['photoURL']
-                                            .toString()
-                                            .startsWith('http') ||
-                                        _userData!['photoURL']
-                                            .toString()
-                                            .startsWith('https'))
-                                ? NetworkImage(_userData!['photoURL'])
-                                : null,
-                            child: _userData!['photoURL'] == null ||
-                                    _userData!['photoURL'].toString().isEmpty ||
-                                    (!_userData!['photoURL']
-                                            .toString()
-                                            .startsWith('http') &&
-                                        !_userData!['photoURL']
-                                            .toString()
-                                            .startsWith('https'))
-                                ? (_userData!['photoURL'] != null &&
-                                        _userData!['photoURL']
-                                            .toString()
-                                            .isNotEmpty &&
-                                        RegExp(r'^(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=|[A-Za-z0-9+\/]{4})$')
-                                            .hasMatch(_userData!['photoURL']
-                                                .toString()))
-                                    ? Image.memory(
-                                        base64Decode(_userData!['photoURL']
-                                            .toString()
-                                            .split(',')
-                                            .last),
-                                        width: 48,
-                                        height: 48,
-                                        fit: BoxFit.cover,
-                                      )
-                                    : Text(
-                                        _userInitials,
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      )
+                            backgroundImage: _buildUserAvatarImage(_userData),
+                            child: _buildUserAvatarImage(_userData) == null
+                                ? Text(
+                                    _userInitials,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  )
                                 : null,
                           )
                         : const CircleAvatar(
@@ -878,40 +810,57 @@ class _DetailScreenState extends State<DetailScreen> {
   // Helper to build image from base64 or URL
   Widget _buildImage(String imageSource, BuildContext context) {
     try {
-      // Check if it's a base64 image
-      if (imageSource.startsWith('data:image') ||
-          RegExp(r'^(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=|[A-Za-z0-9+\/]{4})$')
-              .hasMatch(imageSource)) {
-        // It's base64, decode it
+      // Check if it's a base64 image (data URL format)
+      if (imageSource.startsWith('data:image/')) {
+        final base64String = imageSource.split(',').last;
         return Image.memory(
-          base64Decode(imageSource.split(',').last),
+          base64Decode(base64String),
           height: 200,
           width: double.infinity,
           fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            print('Error loading base64 image: $error');
+            return _buildErrorImage();
+          },
         );
-      } else if (imageSource.startsWith('assets/')) {
-        // It's an asset
+      }
+      // Check if it's a pure base64 string (without data URL prefix)
+      else if (_isBase64(imageSource)) {
+        return Image.memory(
+          base64Decode(imageSource),
+          height: 200,
+          width: double.infinity,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            print('Error loading base64 image: $error');
+            return _buildErrorImage();
+          },
+        );
+      }
+      // Check if it's an asset
+      else if (imageSource.startsWith('assets/')) {
         return Image.asset(
           imageSource,
           height: 200,
           width: double.infinity,
           fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            print('Error loading asset image: $error');
+            return _buildErrorImage();
+          },
         );
-      } else {
-        // Assume it's a network URL
+      }
+      // Check if it's a network URL
+      else if (imageSource.startsWith('http://') ||
+          imageSource.startsWith('https://')) {
         return Image.network(
           imageSource,
           height: 200,
           width: double.infinity,
           fit: BoxFit.cover,
           errorBuilder: (context, error, stackTrace) {
-            return Container(
-              height: 200,
-              color: Colors.grey.shade300,
-              child: const Center(
-                child: Icon(Icons.error, color: Colors.red),
-              ),
-            );
+            print('Error loading network image: $error');
+            return _buildErrorImage();
           },
           loadingBuilder: (context, child, loadingProgress) {
             if (loadingProgress == null) return child;
@@ -930,16 +879,42 @@ class _DetailScreenState extends State<DetailScreen> {
           },
         );
       }
+      // If none of the above, show error
+      else {
+        print('Unknown image format: $imageSource');
+        return _buildErrorImage();
+      }
     } catch (e) {
       print('Error displaying image: $e');
-      return Container(
-        height: 200,
-        color: Colors.grey.shade300,
-        child: const Center(
-          child: Icon(Icons.broken_image, color: Colors.red),
-        ),
-      );
+      return _buildErrorImage();
     }
+  }
+
+// Add these helper methods:
+  bool _isBase64(String str) {
+    try {
+      base64Decode(str);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Widget _buildErrorImage() {
+    return Container(
+      height: 200,
+      color: Colors.grey.shade300,
+      child: const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.broken_image, color: Colors.red, size: 40),
+            SizedBox(height: 8),
+            Text('Image not available', style: TextStyle(fontSize: 12)),
+          ],
+        ),
+      ),
+    );
   }
 
   String _formatDate(DateTime? date) {
@@ -971,6 +946,37 @@ class _DetailScreenState extends State<DetailScreen> {
       print('Error loading user data for post: $e');
       return null;
     }
+  }
+
+  ImageProvider? _buildUserAvatarImage(Map<String, dynamic>? userData) {
+    if (userData == null || userData['photoURL'] == null) {
+      return null;
+    }
+
+    final photoURL = userData['photoURL'].toString();
+
+    if (photoURL.isEmpty) return null;
+
+    try {
+      // Handle data URL format
+      if (photoURL.startsWith('data:image/')) {
+        final base64String = photoURL.split(',').last;
+        return MemoryImage(base64Decode(base64String));
+      }
+      // Handle network URLs
+      else if (photoURL.startsWith('http://') ||
+          photoURL.startsWith('https://')) {
+        return NetworkImage(photoURL);
+      }
+      // Handle pure base64
+      else if (_isBase64(photoURL)) {
+        return MemoryImage(base64Decode(photoURL));
+      }
+    } catch (e) {
+      print('Error building user avatar image: $e');
+    }
+
+    return null;
   }
 
   // Build like button for the post detail
@@ -1101,24 +1107,43 @@ class _DetailScreenState extends State<DetailScreen> {
 
     final photoURL = _userData!['photoURL'];
 
-    if (photoURL != null &&
-        photoURL.toString().isNotEmpty &&
-        (photoURL.toString().startsWith('http') ||
-            photoURL.toString().startsWith('https'))) {
-      return CircleAvatar(
-        backgroundImage: NetworkImage(photoURL),
-        radius: 20,
-      );
-    } else if (photoURL != null &&
-        photoURL.toString().isNotEmpty &&
-        RegExp(r'^(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=|[A-Za-z0-9+\/]{4})$')
-            .hasMatch(photoURL.toString())) {
-      // Base64 image
-      return CircleAvatar(
-        backgroundImage:
-            MemoryImage(base64Decode(photoURL.toString().split(',').last)),
-        radius: 20,
-      );
+    if (photoURL != null && photoURL.toString().isNotEmpty) {
+      try {
+        // Handle data URL format base64
+        if (photoURL.toString().startsWith('data:image/')) {
+          final base64String = photoURL.toString().split(',').last;
+          return CircleAvatar(
+            backgroundImage: MemoryImage(base64Decode(base64String)),
+            radius: 20,
+            onBackgroundImageError: (error, stackTrace) {
+              print('Error loading avatar image: $error');
+            },
+          );
+        }
+        // Handle network URLs
+        else if (photoURL.toString().startsWith('http://') ||
+            photoURL.toString().startsWith('https://')) {
+          return CircleAvatar(
+            backgroundImage: NetworkImage(photoURL.toString()),
+            radius: 20,
+            onBackgroundImageError: (error, stackTrace) {
+              print('Error loading network avatar: $error');
+            },
+          );
+        }
+        // Handle pure base64
+        else if (_isBase64(photoURL.toString())) {
+          return CircleAvatar(
+            backgroundImage: MemoryImage(base64Decode(photoURL.toString())),
+            radius: 20,
+            onBackgroundImageError: (error, stackTrace) {
+              print('Error loading base64 avatar: $error');
+            },
+          );
+        }
+      } catch (e) {
+        print('Error creating avatar: $e');
+      }
     }
 
     return CircleAvatar(

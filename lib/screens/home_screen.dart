@@ -380,8 +380,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: TextButton(
                       onPressed: () {
                         // Navigate to detail screen without specific postId to show all posts
-                        _navigateForward(const DetailScreen(),
-                            onReturn: () => _loadPosts(), allowBack: true);
+                        _navigateForward(
+                            DetailScreen(postId: _userPosts.first.id),
+                            allowBack: true);
                       },
                       child: const Text(
                         'View all my notes',
@@ -873,7 +874,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             if (post.latitude != null &&
                                 post.longitude != null) {
                               _navigateForward(MapViewScreen(post: post),
-                                  onReturn: () => {}, allowBack: true);
+                                  allowBack: true);
                             } else {
                               // Show snackbar if no coordinates
                               ScaffoldMessenger.of(context).showSnackBar(
@@ -1049,27 +1050,17 @@ class _HomeScreenState extends State<HomeScreen> {
   void _navigateForward(Widget destination,
       {VoidCallback? onReturn, bool allowBack = false}) {
     if (allowBack) {
-      // Use regular push for screens that should have back button (like DetailScreen)
+      // Use regular push for screens that should have back button
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => destination),
-      ).then((_) {
-        _loadUserData();
-        if (onReturn != null) {
-          onReturn();
-        }
-      });
+      ).then((_) => _loadPosts()); // Refresh data when returning
     } else {
       // Use pushReplacement for screens that shouldn't have back button
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => destination),
-      ).then((_) {
-        _loadUserData();
-        if (onReturn != null) {
-          onReturn();
-        }
-      });
+      ).then((_) => _loadPosts());
     }
   }
 

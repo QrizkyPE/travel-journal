@@ -139,23 +139,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
       // Upload new image if selected
       if (_selectedImage != null) {
-        // Convert to base64 for storage
+        // Convert to base64 for storage with proper data URL format
         final bytes = await _selectedImage!.readAsBytes();
-        photoURL = base64Encode(bytes);
+        final base64String = base64Encode(bytes);
+        photoURL =
+            'data:image/jpeg;base64,$base64String'; // Add proper data URL format
       }
-
-      // // Format phone number with country code if present
-      // String phoneNumber = _phoneController.text.trim();
-      // if (phoneNumber.isNotEmpty && _selectedCountryCode != null) {
-      //   phoneNumber = '$_selectedCountryCode $phoneNumber';
-      // }
 
       // Update profile in Firestore and Auth
       await authService.updateUserProfile(
         displayName: _nameController.text.trim(),
         photoURL: photoURL,
-        // location: _locationController.text.trim(),
-        // phoneNumber: phoneNumber,
       );
 
       if (mounted) {
@@ -230,24 +224,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                   radius: 60,
                                   backgroundImage: FileImage(_selectedImage!),
                                 )
-                              : _currentPhotoUrl != null
-                                  ? CircleAvatar(
-                                      radius: 60,
-                                      backgroundImage:
-                                          _buildProfileImage(_currentPhotoUrl),
-                                    )
-                                  : CircleAvatar(
-                                      radius: 60,
-                                      backgroundColor: Colors.pink.shade100,
-                                      child: Text(
-                                        _userInitials,
-                                        style: const TextStyle(
-                                          fontSize: 36,
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
+                              : _buildProfileImageWidget(),
 
                           // Edit overlay
                           Positioned(
@@ -444,24 +421,67 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   // Helper method to build profile image
-  ImageProvider _buildProfileImage(String? imageSource) {
-    try {
-      if (imageSource == null) {
-        return const AssetImage('assets/images/default_avatar.png');
-      }
+  ImageProvider? _buildProfileImage(String? imageSource) {
+    if (imageSource == null || imageSource.isEmpty) {
+      return null; // Return null to show initials instead
+    }
 
-      if (imageSource.startsWith('data:image') ||
-          RegExp(r'^(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=|[A-Za-z0-9+\/]{4})$')
-              .hasMatch(imageSource)) {
-        // It's base64, decode it
-        return MemoryImage(base64Decode(imageSource.split(',').last));
-      } else {
-        // Assume it's a network URL
+    try {
+      // Handle data URL format base64
+      if (imageSource.startsWith('data:image/')) {
+        final base64String = imageSource.split(',').last;
+        return MemoryImage(base64Decode(base64String));
+      }
+      // Handle network URLs
+      else if (imageSource.startsWith('http://') ||
+          imageSource.startsWith('https://')) {
         return NetworkImage(imageSource);
+      }
+      // Handle pure base64 string
+      else if (_isBase64(imageSource)) {
+        return MemoryImage(base64Decode(imageSource));
       }
     } catch (e) {
       print('Error loading profile image: $e');
-      return const AssetImage('assets/images/default_avatar.png');
     }
+
+    return null; // Return null to show initials fallback
+  }
+
+  bool _isBase64(String str) {
+    try {
+      base64Decode(str);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Widget _buildProfileImageWidget() {
+    final profileImage = _buildProfileImage(_currentPhotoUrl);
+
+    if (profileImage != null) {
+      return CircleAvatar(
+        radius: 60,
+        backgroundImage: profileImage,
+        onBackgroundImageError: (error, stackTrace) {
+          print('Error loading profile image: $error');
+        },
+      );
+    }
+
+    // Fallback to initials
+    return CircleAvatar(
+      radius: 60,
+      backgroundColor: Colors.pink.shade100,
+      child: Text(
+        _userInitials,
+        style: const TextStyle(
+          fontSize: 36,
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
   }
 }
