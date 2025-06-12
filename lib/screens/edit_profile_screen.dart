@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:image/image.dart' as img;
 import '../services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:io';
@@ -137,13 +138,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     try {
       String? photoURL = _currentPhotoUrl;
 
-      // Upload new image if selected
+      // Upload new image if selected with heavy compression
       if (_selectedImage != null) {
-        // Convert to base64 for storage with proper data URL format
-        final bytes = await _selectedImage!.readAsBytes();
-        final base64String = base64Encode(bytes);
-        photoURL =
-            'data:image/jpeg;base64,$base64String'; // Add proper data URL format
+        photoURL = await _compressAndEncodeImage(_selectedImage!);
+        if (photoURL == null) {
+          throw Exception('Failed to process image');
+        }
       }
 
       // Update profile in Firestore and Auth
@@ -156,7 +156,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Profile updated successfully')),
         );
-        Navigator.pop(context); // Go back to profile screen
+        Navigator.pop(context);
       }
     } catch (e) {
       print('Error updating profile: $e');
@@ -166,6 +166,76 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           SnackBar(content: Text('Error updating profile: $e')),
         );
       }
+    }
+  }
+
+  Future<String?> _compressAndEncodeImage(File imageFile) async {
+    try {
+      // Read image bytes
+      final bytes = await imageFile.readAsBytes();
+
+      // Decode image
+      final originalImage = img.decodeImage(bytes);
+      if (originalImage == null) {
+        throw Exception('Could not decode image');
+      }
+
+      // VERY aggressive sizing for APK - max 100x100 pixels
+      const maxSize = 100;
+      int newWidth = originalImage.width;
+      int newHeight = originalImage.height;
+
+      if (originalImage.width > maxSize || originalImage.height > maxSize) {
+        final ratio = maxSize /
+            (originalImage.width > originalImage.height
+                ? originalImage.width
+                : originalImage.height);
+        newWidth = (originalImage.width * ratio).round();
+        newHeight = (originalImage.height * ratio).round();
+      }
+
+      // Resize image to very small size
+      final resized = img.copyResize(
+        originalImage,
+        width: newWidth,
+        height: newHeight,
+        interpolation: img.Interpolation.linear, // Faster compression
+      );
+
+      // VERY aggressive compression - quality 10
+      final compressedBytes = img.encodeJpg(resized, quality: 10);
+
+      // Check final size - must be under 10KB for APK
+      if (compressedBytes.length > 10000) {
+        // If still too large, make it tiny (50x50)
+        final tinyResized = img.copyResize(
+          originalImage,
+          width: 100,
+          height: 100,
+          interpolation: img.Interpolation.linear,
+        );
+        final tinyBytes = img.encodeJpg(tinyResized, quality: 10);
+
+        // Final check - if STILL too large, give up
+        if (tinyBytes.length > 10000) {
+          print(
+              'Image too large even after extreme compression: ${tinyBytes.length} bytes');
+          return null;
+        }
+
+        final base64String = base64Encode(tinyBytes);
+        print(
+            'Final compressed image size: ${tinyBytes.length} bytes, Base64 length: ${base64String.length}');
+        return 'data:image/jpeg;base64,$base64String';
+      }
+
+      final base64String = base64Encode(compressedBytes);
+      print(
+          'Compressed image size: ${compressedBytes.length} bytes, Base64 length: ${base64String.length}');
+      return 'data:image/jpeg;base64,$base64String';
+    } catch (e) {
+      print('Error compressing image: $e');
+      return null;
     }
   }
 
