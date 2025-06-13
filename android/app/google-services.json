@@ -10,7 +10,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:826819912238:android:7dd14f035e82cc244275bf",
         "android_client_info": {
-          "package_name": "com.qmod.traveljournal"
+          "package_name": "com.example.traveljournal"
         }
       },
       "oauth_client": [],
