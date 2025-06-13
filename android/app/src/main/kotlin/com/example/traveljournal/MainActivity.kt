@@ -1,4 +1,4 @@
-package com.example.traveljournal
+package com.qmod.traveljournal
 
 import io.flutter.embedding.android.FlutterActivity
 
