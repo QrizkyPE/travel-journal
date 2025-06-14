@@ -1,9 +1,12 @@
+import 'dart:js_interop';
+
 import 'package:flutter/material.dart';
 import '../models/travel_post.dart';
 import '../services/travel_post_service.dart';
 import '../services/auth_service.dart';
 import 'detail_screen.dart';
 import 'dart:convert';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class BestDestinationsScreen extends StatefulWidget {
   const BestDestinationsScreen({super.key});
@@ -406,29 +409,83 @@ class _BestDestinationsScreenState extends State<BestDestinationsScreen> {
   }
 
   // Helper to build image from base64 or URL
+  // Helper to build image from base64, URL, or shortener format
   Widget _buildImage(String imageSource) {
     try {
-      // Check if it's a base64 image
-      if (imageSource.startsWith('data:image') ||
-          RegExp(r'^(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=|[A-Za-z0-9+\/]{4})$')
-              .hasMatch(imageSource)) {
-        // It's base64, decode it
+      // Handle shortener format (short:XXXXXXXX)
+      if (imageSource.startsWith('short:')) {
+        final shortId = imageSource.substring(6); // Remove "short:" prefix
+        return FutureBuilder<String?>(
+          future: _loadImageFromShortener(shortId),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Container(
+                height: 180,
+                width: double.infinity,
+                color: Colors.grey.shade200,
+                child: const Center(
+                  child: CircularProgressIndicator(),
+                ),
+              );
+            }
+
+            if (snapshot.hasData && snapshot.data != null) {
+              final base64String = snapshot.data!.split(',').last;
+              return Image.memory(
+                base64Decode(base64String),
+                height: 180,
+                width: double.infinity,
+                fit: BoxFit.cover,
+              );
+            }
+
+            // Error loading from shortener
+            return Container(
+              height: 180,
+              width: double.infinity,
+              color: Colors.grey.shade300,
+              child: const Center(
+                child: Icon(Icons.broken_image, color: Colors.red),
+              ),
+            );
+          },
+        );
+      }
+
+      // Check if it's a data URL base64 image
+      else if (imageSource.startsWith('data:image')) {
         return Image.memory(
           base64Decode(imageSource.split(',').last),
           height: 180,
           width: double.infinity,
           fit: BoxFit.cover,
         );
-      } else if (imageSource.startsWith('assets/')) {
-        // It's an asset
+      }
+
+      // Check if it's pure base64 string
+      else if (RegExp(
+              r'^(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=|[A-Za-z0-9+\/]{4})$')
+          .hasMatch(imageSource)) {
+        return Image.memory(
+          base64Decode(imageSource),
+          height: 180,
+          width: double.infinity,
+          fit: BoxFit.cover,
+        );
+      }
+
+      // Asset image
+      else if (imageSource.startsWith('assets/')) {
         return Image.asset(
           imageSource,
           height: 180,
           width: double.infinity,
           fit: BoxFit.cover,
         );
-      } else {
-        // Assume it's a network URL
+      }
+
+      // Network URL
+      else {
         return Image.network(
           imageSource,
           height: 180,
@@ -472,6 +529,25 @@ class _BestDestinationsScreenState extends State<BestDestinationsScreen> {
     }
   }
 
+  // Add this method to load images from shortener
+  Future<String?> _loadImageFromShortener(String shortId) async {
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('image_data')
+          .doc(shortId)
+          .get();
+
+      if (doc.exists) {
+        final data = doc.data() as Map<String, dynamic>;
+        final base64String = data['data'] as String;
+        return 'data:image/jpeg;base64,$base64String';
+      }
+    } catch (e) {
+      print('Error loading image from shortener: $e');
+    }
+    return null;
+  }
+
   // Helper method to build user avatar with proper support for base64 images
   Widget _buildUserAvatar(Map<String, dynamic>? userData) {
     if (userData == null) {
@@ -487,17 +563,47 @@ class _BestDestinationsScreenState extends State<BestDestinationsScreen> {
 
     // Handle different image types
     if (photoURL != null && photoURL.toString().isNotEmpty) {
-      if (photoURL.toString().startsWith('http') ||
-          photoURL.toString().startsWith('https')) {
+      // Handle shortener format
+      if (photoURL.toString().startsWith('short:')) {
+        final shortId = photoURL.toString().substring(6);
+        return FutureBuilder<String?>(
+          future: _loadImageFromShortener(shortId),
+          builder: (context, snapshot) {
+            if (snapshot.hasData && snapshot.data != null) {
+              final base64String = snapshot.data!.split(',').last;
+              return CircleAvatar(
+                radius: 16,
+                backgroundImage: MemoryImage(base64Decode(base64String)),
+                backgroundColor: Colors.blue,
+              );
+            }
+            return CircleAvatar(
+              radius: 16,
+              backgroundColor: Colors.blue,
+              child: Text(
+                userInitials,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            );
+          },
+        );
+      }
+      // Handle network URLs
+      else if (photoURL.toString().startsWith('http')) {
         return CircleAvatar(
           radius: 16,
           backgroundImage: NetworkImage(photoURL),
           backgroundColor: Colors.blue,
         );
-      } else if (RegExp(
-              r'^(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=|[A-Za-z0-9+\/]{4})$')
-          .hasMatch(photoURL.toString())) {
-        // For base64 images
+      }
+      // Handle base64 images
+      else if (photoURL.toString().startsWith('data:image') ||
+          RegExp(r'^(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=|[A-Za-z0-9+\/]{4})$')
+              .hasMatch(photoURL.toString())) {
         return CircleAvatar(
           radius: 16,
           backgroundImage:
