@@ -25,14 +25,15 @@ class _BestDestinationsScreenState extends State<BestDestinationsScreen> {
 
   Future<void> _loadBestDestinations() async {
     try {
+      if (!mounted) return;
       setState(() => _isLoading = true);
-      
+
       // Get all posts from Firestore
       final posts = await travelPostService.getRecentPosts();
-      
+
       // Sort posts by like count in descending order
       posts.sort((a, b) => b.likeCount.compareTo(a.likeCount));
-      
+
       if (mounted) {
         setState(() {
           _allDestinations = posts;
@@ -41,13 +42,13 @@ class _BestDestinationsScreenState extends State<BestDestinationsScreen> {
       }
     } catch (e) {
       print("Error loading best destinations: $e");
-      
+
       if (mounted) {
         setState(() {
           _allDestinations = [];
           _isLoading = false;
         });
-        
+
         // Show error to user
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Couldn't load destinations: $e")),
@@ -61,7 +62,7 @@ class _BestDestinationsScreenState extends State<BestDestinationsScreen> {
     if (_userDataCache.containsKey(userId)) {
       return _userDataCache[userId];
     }
-    
+
     try {
       final userData = await authService.getUserDataById(userId);
       // Cache the result
@@ -77,10 +78,13 @@ class _BestDestinationsScreenState extends State<BestDestinationsScreen> {
     final nameParts = fullName.split(' ');
     if (nameParts.isEmpty) return 'U';
     if (nameParts.length == 1) {
-      return nameParts[0].isNotEmpty ? nameParts[0].substring(0, 1).toUpperCase() : 'U';
+      return nameParts[0].isNotEmpty
+          ? nameParts[0].substring(0, 1).toUpperCase()
+          : 'U';
     }
-    return (nameParts[0].isNotEmpty && nameParts[1].isNotEmpty) 
-        ? (nameParts[0].substring(0, 1) + nameParts[1].substring(0, 1)).toUpperCase()
+    return (nameParts[0].isNotEmpty && nameParts[1].isNotEmpty)
+        ? (nameParts[0].substring(0, 1) + nameParts[1].substring(0, 1))
+            .toUpperCase()
         : 'U';
   }
 
@@ -90,7 +94,7 @@ class _BestDestinationsScreenState extends State<BestDestinationsScreen> {
     final isDarkMode = theme.brightness == Brightness.dark;
     final textColor = theme.textTheme.bodyLarge?.color;
     final backgroundColor = theme.scaffoldBackgroundColor;
-    
+
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
@@ -106,10 +110,12 @@ class _BestDestinationsScreenState extends State<BestDestinationsScreen> {
         backgroundColor: backgroundColor,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, size: 20),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            Navigator.pop(context, true);
+          },
         ),
       ),
-      body: _isLoading 
+      body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _allDestinations.isEmpty
               ? Center(
@@ -119,7 +125,9 @@ class _BestDestinationsScreenState extends State<BestDestinationsScreen> {
                       Icon(
                         Icons.location_city_outlined,
                         size: 80,
-                        color: isDarkMode ? Colors.grey.shade600 : Colors.grey.shade400,
+                        color: isDarkMode
+                            ? Colors.grey.shade600
+                            : Colors.grey.shade400,
                       ),
                       const SizedBox(height: 16),
                       Text(
@@ -147,10 +155,10 @@ class _BestDestinationsScreenState extends State<BestDestinationsScreen> {
     final isDarkMode = theme.brightness == Brightness.dark;
     final textColor = theme.textTheme.bodyLarge?.color;
     final cardColor = theme.cardColor;
-    
+
     // Check if this is the current user's post
     final isUserPost = post.userId == authService.currentUser?.uid;
-    
+
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -181,13 +189,16 @@ class _BestDestinationsScreenState extends State<BestDestinationsScreen> {
               children: [
                 // Image
                 ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(12)),
                   child: post.imageUrl != null
                       ? _buildImage(post.imageUrl!)
                       : Container(
                           height: 180,
                           width: double.infinity,
-                          color: isDarkMode ? Colors.grey.shade800 : Colors.grey.shade300,
+                          color: isDarkMode
+                              ? Colors.grey.shade800
+                              : Colors.grey.shade300,
                           child: const Icon(
                             Icons.image,
                             size: 50,
@@ -195,13 +206,14 @@ class _BestDestinationsScreenState extends State<BestDestinationsScreen> {
                           ),
                         ),
                 ),
-                
+
                 // Ranking badge
                 Positioned(
                   top: 8,
                   left: 8,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                       color: Colors.amber.withOpacity(0.9),
                       borderRadius: BorderRadius.circular(20),
@@ -226,13 +238,14 @@ class _BestDestinationsScreenState extends State<BestDestinationsScreen> {
                     ),
                   ),
                 ),
-                
+
                 // Like count
                 Positioned(
                   top: 8,
                   right: 8,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
                       color: Colors.red.withOpacity(0.8),
                       borderRadius: BorderRadius.circular(20),
@@ -257,14 +270,15 @@ class _BestDestinationsScreenState extends State<BestDestinationsScreen> {
                     ),
                   ),
                 ),
-                
+
                 // User's own post indicator
                 if (isUserPost)
                   Positioned(
                     bottom: 8,
                     left: 8,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
                         color: Colors.orange.withOpacity(0.8),
                         borderRadius: BorderRadius.circular(16),
@@ -281,7 +295,7 @@ class _BestDestinationsScreenState extends State<BestDestinationsScreen> {
                   ),
               ],
             ),
-            
+
             // Post details
             Padding(
               padding: const EdgeInsets.all(12),
@@ -293,7 +307,7 @@ class _BestDestinationsScreenState extends State<BestDestinationsScreen> {
                     future: _getUserDataForPost(post.userId),
                     builder: (context, snapshot) {
                       final userData = snapshot.data;
-                      
+
                       return userData != null
                           ? Padding(
                               padding: const EdgeInsets.only(bottom: 8),
@@ -315,7 +329,7 @@ class _BestDestinationsScreenState extends State<BestDestinationsScreen> {
                           : const SizedBox.shrink();
                     },
                   ),
-                  
+
                   // Title
                   Text(
                     post.title,
@@ -325,9 +339,9 @@ class _BestDestinationsScreenState extends State<BestDestinationsScreen> {
                       color: textColor,
                     ),
                   ),
-                  
+
                   const SizedBox(height: 4),
-                  
+
                   // Location
                   Row(
                     children: [
@@ -341,7 +355,9 @@ class _BestDestinationsScreenState extends State<BestDestinationsScreen> {
                         child: Text(
                           post.location,
                           style: TextStyle(
-                            color: isDarkMode ? Colors.grey.shade400 : Colors.grey.shade700,
+                            color: isDarkMode
+                                ? Colors.grey.shade400
+                                : Colors.grey.shade700,
                             fontSize: 14,
                           ),
                           maxLines: 1,
@@ -350,9 +366,9 @@ class _BestDestinationsScreenState extends State<BestDestinationsScreen> {
                       ),
                     ],
                   ),
-                  
+
                   const SizedBox(height: 12),
-                  
+
                   // View Details button
                   Align(
                     alignment: Alignment.centerRight,
@@ -363,13 +379,18 @@ class _BestDestinationsScreenState extends State<BestDestinationsScreen> {
                           MaterialPageRoute(
                             builder: (context) => DetailScreen(postId: post.id),
                           ),
-                        ).then((_) => _loadBestDestinations());
+                        ).then((_) {
+                          if (mounted) {
+                            _loadBestDestinations();
+                          }
+                        });
                       },
                       icon: const Icon(Icons.visibility, size: 16),
                       label: const Text('View Details'),
                       style: TextButton.styleFrom(
                         foregroundColor: Colors.blue,
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
                         minimumSize: Size.zero,
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
@@ -388,7 +409,7 @@ class _BestDestinationsScreenState extends State<BestDestinationsScreen> {
   Widget _buildImage(String imageSource) {
     try {
       // Check if it's a base64 image
-      if (imageSource.startsWith('data:image') || 
+      if (imageSource.startsWith('data:image') ||
           RegExp(r'^(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=|[A-Za-z0-9+\/]{4})$')
               .hasMatch(imageSource)) {
         // It's base64, decode it
@@ -460,29 +481,32 @@ class _BestDestinationsScreenState extends State<BestDestinationsScreen> {
         child: const Icon(Icons.person, color: Colors.white, size: 16),
       );
     }
-    
+
     final photoURL = userData['photoURL'];
     final userInitials = _getInitials(userData['fullName'] ?? 'User');
-    
+
     // Handle different image types
     if (photoURL != null && photoURL.toString().isNotEmpty) {
-      if (photoURL.toString().startsWith('http') || photoURL.toString().startsWith('https')) {
+      if (photoURL.toString().startsWith('http') ||
+          photoURL.toString().startsWith('https')) {
         return CircleAvatar(
           radius: 16,
           backgroundImage: NetworkImage(photoURL),
           backgroundColor: Colors.blue,
         );
-      } else if (RegExp(r'^(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=|[A-Za-z0-9+\/]{4})$')
-               .hasMatch(photoURL.toString())) {
+      } else if (RegExp(
+              r'^(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=|[A-Za-z0-9+\/]{4})$')
+          .hasMatch(photoURL.toString())) {
         // For base64 images
         return CircleAvatar(
           radius: 16,
-          backgroundImage: MemoryImage(base64Decode(photoURL.toString().split(',').last)),
+          backgroundImage:
+              MemoryImage(base64Decode(photoURL.toString().split(',').last)),
           backgroundColor: Colors.blue,
         );
       }
     }
-    
+
     // Fallback to initials if no valid image
     return CircleAvatar(
       radius: 16,
@@ -497,4 +521,4 @@ class _BestDestinationsScreenState extends State<BestDestinationsScreen> {
       ),
     );
   }
-} 
+}

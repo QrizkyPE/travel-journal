@@ -43,6 +43,25 @@
           "other_platform_oauth_client": []
         }
       }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:826819912238:android:84c82b518d81d6b14275bf",
+        "android_client_info": {
+          "package_name": "com.qmod.traveljournal"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC4u9MKVX3MR0o4cSCS7iU_BQ4bhabZYww"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
     }
   ],
   "configuration_version": "1"

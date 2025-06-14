@@ -86,6 +86,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadPosts() async {
+    if (!mounted) return;
     try {
       setState(() => _isLoading = true);
 
@@ -288,10 +289,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                   TextButton(
-                    onPressed: () {
-                      // Navigate to all best destinations
-                      _navigateForward(const BestDestinationsScreen(),
-                          onReturn: () => _loadPosts());
+                    onPressed: () async {
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const BestDestinationsScreen(),
+                        ),
+                      );
                     },
                     child: const Text(
                       'View all',
@@ -378,11 +382,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   Align(
                     alignment: Alignment.center,
                     child: TextButton(
-                      onPressed: () {
-                        // Navigate to detail screen without specific postId to show all posts
-                        _navigateForward(
-                            DetailScreen(postId: _userPosts.first.id),
-                            allowBack: true);
+                      onPressed: () async {
+                        final result = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                DetailScreen(postId: _userPosts.first.id),
+                          ),
+                        );
                       },
                       child: const Text(
                         'View all my notes',
@@ -515,9 +522,13 @@ class _HomeScreenState extends State<HomeScreen> {
     final isUserPost = post.userId == authService.currentUser?.uid;
 
     return GestureDetector(
-      onTap: () {
-        _navigateForward(DetailScreen(postId: post.id),
-            onReturn: () => _loadPosts(), allowBack: true);
+      onTap: () async {
+        final result = await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => DetailScreen(postId: _userPosts.first.id),
+          ),
+        );
       },
       child: Container(
         width: 180,
@@ -707,9 +718,13 @@ class _HomeScreenState extends State<HomeScreen> {
     final iconColor = isDarkMode ? Colors.grey.shade400 : Colors.grey.shade600;
 
     return GestureDetector(
-      onTap: () {
-        _navigateForward(DetailScreen(postId: post.id),
-            onReturn: () => _loadPosts());
+      onTap: () async {
+        final result = await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => DetailScreen(postId: _userPosts.first.id),
+          ),
+        );
       },
       child: Container(
         margin: const EdgeInsets.all(8),

@@ -149,7 +149,7 @@ class _DetailScreenState extends State<DetailScreen> {
                 icon: Icon(Icons.arrow_back_ios, size: 20, color: textColor),
                 onPressed: () {
                   // Use the custom back navigation
-                  _navigateBack(refresh: true);
+                  Navigator.pop(context);
                 },
               )
             : null,
